@@ -3,7 +3,7 @@
 How accurate are bookmaker odds in the Greek Super League, how much margin do bookmakers build into each market, and where does that margin come from?
 Python (pandas, SciPy), SQL (SQLite) and Power BI on 2,388 real matches with Bet365 and Pinnacle odds.
 
-![Dashboard](images/dashboard.png)
+![Dashboard](dashboard.png)
 
 ## Questions
 1. **Margin:** How large is the bookmaker margin (overround) in the 1X2 and Over/Under 2.5 markets, and how did it change by season?
@@ -20,7 +20,7 @@ Python (pandas, SciPy), SQL (SQLite) and Power BI on 2,388 real matches with Bet
 ## Method
 1. **Load & clean** (`01_load_clean.ipynb`, pandas): stacked 10 files with different column sets (52–131 columns), parsed two date formats, removed 1 match without a result, checked that every result agrees with the goals (0 mismatches), duplicates (0) and team names (25 teams, one spelling each). Investigated an outlier season (2023/24: 2.96 goals per match) and confirmed it is real data, not an error.
 2. **Feature engineering:** implied probability = 1 / odds; overround = sum of implied probabilities − 1; fair (margin-free) probability = implied probability / sum. Exported to CSV and a SQLite database.
-3. **SQL analysis** (`sql/`, SQLite in DBeaver): season overview, calibration by probability band (CTE + `UNION ALL`), player return by odds band, home advantage by season, theoretical vs actual hold by market.
+3. **SQL analysis** (`.sql` files, SQLite in DBeaver): season overview, calibration by probability band (CTE + `UNION ALL`), player return by odds band, home advantage by season, theoretical vs actual hold by market.
 4. **Statistical tests** (`02_statistical_tests.ipynb`, SciPy): binomial tests per probability band, chi-square test of independence, linear regression on the season trend, Brier score with a paired t-test.
 5. **Dashboard** (Power BI): KPI cards, margin and home/away trends by season, calibration chart, Over 2.5 expected vs actual, season slicer.
 
@@ -32,6 +32,8 @@ Python (pandas, SciPy), SQL (SQLite) and Power BI on 2,388 real matches with Bet
 - Strong favourites priced below 1.50 won **78.3%** vs **73.6%** fair (655 outcomes, p = 0.006). The same flat stake returned only **−0.5%**.
 - Of 9 probability bands, 4 differ significantly from the odds (0–10%, 40–50%, 70–80%, 80–100%; p < 0.05).
 - **Business meaning:** most of the bookmaker's margin is earned on longshots, not on favourites.
+
+![Calibration chart](calibration.png)
 
 **3. Hold by market (2019/20–2025/26, 1 unit on every outcome).**
 
@@ -61,28 +63,26 @@ Over/Under kept almost exactly its theoretical margin; 1X2 kept more, because eq
 ## SQL Queries
 | File | What it answers |
 |---|---|
-| `sql/01_season_overview.sql` | Results, goals and bookmaker margins per season |
-| `sql/02_calibration.sql` | Predicted vs actual win rate per 10-point probability band (CTE + UNION ALL) |
-| `sql/03_return_by_odds_band.sql` | Return of a flat stake per odds band (favourite-longshot bias) |
-| `sql/04_home_advantage.sql` | Home vs away wins per season, empty-stadium season flagged |
-| `sql/05_market_hold.sql` | Theoretical vs actual hold per market and bookmaker |
+| `01_season_overview.sql` | Results, goals and bookmaker margins per season |
+| `02_calibration.sql` | Predicted vs actual win rate per 10-point probability band (CTE + UNION ALL) |
+| `03_return_by_odds_band.sql` | Return of a flat stake per odds band (favourite-longshot bias) |
+| `04_home_advantage.sql` | Home vs away wins per season, empty-stadium season flagged |
+| `05_market_hold.sql` | Theoretical vs actual hold per market and bookmaker |
 
 ## Repository Structure
 ```
 greek-super-league-betting-markets/
 ├── README.md
-├── 01_load_clean.ipynb
-├── 02_statistical_tests.ipynb
-├── greek_betting_markets.pbix
-├── images/
-│   ├── dashboard.png
-│   └── calibration.png
-└── sql/
-    ├── 01_season_overview.sql
-    ├── 02_calibration.sql
-    ├── 03_return_by_odds_band.sql
-    ├── 04_home_advantage.sql
-    └── 05_market_hold.sql
+├── 01_load_clean.ipynb          # load 10 seasons, clean, feature engineering, export
+├── 02_statistical_tests.ipynb   # binomial, chi-square, regression, Brier score tests
+├── 01_season_overview.sql
+├── 02_calibration.sql
+├── 03_return_by_odds_band.sql
+├── 04_home_advantage.sql
+├── 05_market_hold.sql
+├── greek_betting_markets.pbix   # Power BI dashboard
+├── dashboard.png
+└── calibration.png              # calibration chart (from 02_statistical_tests.ipynb)
 ```
 
 ## Tools
